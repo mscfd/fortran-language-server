@@ -142,7 +142,7 @@ def main():
                         config_dict = json.load(fhandle)
                         pp_defs = config_dict.get("pp_defs", {})
                         if isinstance(pp_defs, list):
-                            pp_defs = {key: True for key in pp_defs}
+                            pp_defs = {key: "" for key in pp_defs}
                 except:
                     print("Error while parsing '.fortls' settings file")
         #

@@ -439,7 +439,7 @@ class LangServer:
                     self.debug_log = config_dict.get("debug_log", self.debug_log)
                     self.pp_defs = config_dict.get("pp_defs", {})
                     if isinstance(self.pp_defs, list):
-                        self.pp_defs = {key: True for key in self.pp_defs}
+                        self.pp_defs = {key: "" for key in self.pp_defs}
             except:
                 self.post_messages.append([1, "Error while parsing '.fortls' settings file"])
         # Setup logging
