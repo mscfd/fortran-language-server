@@ -675,7 +675,7 @@ def process_file(file_str, close_open_scopes, path=None, fixed_format=False, deb
                 continue
             #
             for def_tmp, value in defs_tmp.items():
-                if line.find(def_tmp) > 0:
+                if line.find(def_tmp) >= 0:
                     if debug:
                         print('{1} !!! Macro sub({0}) "{2}" -> "{3}"'.format(i+1,
                               line.strip(), def_tmp, value))
