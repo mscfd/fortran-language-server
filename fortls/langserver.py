@@ -100,6 +100,7 @@ class LangServer:
         self.max_comment_line_length = settings.get("max_comment_line_length", -1)
         # Set object settings
         set_keyword_ordering(self.sort_keywords)
+        self.configfile = settings.get("configfile", ".fortls")
 
     def post_message(self, message, type=1):
         self.conn.send_notification("window/showMessage", {
@@ -186,7 +187,7 @@ class LangServer:
         self.root_path = path_from_uri(
             params.get("rootUri") or params.get("rootPath") or "")
         # Check for config file
-        config_path = os.path.join(self.root_path, ".fortls")
+        config_path = os.path.join(self.root_path, self.configfile)
         config_exists = os.path.isfile(config_path)
         if config_exists:
             try:

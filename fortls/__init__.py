@@ -29,6 +29,10 @@ def main():
         help="Number of threads to use during workspace initialization (default: 4)"
     )
     parser.add_argument(
+        '--configfile', type=str, default=".fortls",
+        help="File path for fortls config file"
+    )
+    parser.add_argument(
         '--notify_init', action="store_true",
         help="Send notification message when workspace initialization is complete"
     )
@@ -171,6 +175,7 @@ def main():
     #
     settings = {
         "nthreads": args.nthreads,
+        "configfile": args.configfile,
         "notify_init": args.notify_init,
         "symbol_include_mem": (not args.symbol_skip_mem),
         "sync_type": 2 if args.incremental_sync else 1,
