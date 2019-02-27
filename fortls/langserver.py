@@ -70,6 +70,7 @@ class LangServer:
         self.workspace = {}
         self.obj_tree = {}
         self.link_version = 0
+        self.src_path = '.'
         self.source_dirs = []
         self.excl_paths = []
         self.excl_suffixes = []
@@ -184,7 +185,6 @@ class LangServer:
         params = request["params"]
         self.root_path = path_from_uri(
             params.get("rootUri") or params.get("rootPath") or "")
-        self.source_dirs.append(self.root_path)
         # Check for config file
         config_path = os.path.join(self.root_path, ".fortls")
         config_exists = os.path.isfile(config_path)
@@ -193,6 +193,10 @@ class LangServer:
                 import json
                 with open(config_path, 'r') as fhandle:
                     config_dict = json.load(fhandle)
+
+                    self.src_path = config_dict.get("src_path", ".")
+                    self.root_path = os.path.join(self.root_path, self.src_path)
+
                     for excl_path in config_dict.get("excl_paths", []):
                         self.excl_paths.append(os.path.join(self.root_path, excl_path))
                     source_dirs = config_dict.get("source_dirs", [])
@@ -250,7 +254,7 @@ class LangServer:
         # Set object settings
         set_keyword_ordering(self.sort_keywords)
         # Recursively add sub-directories
-        if len(self.source_dirs) == 1:
+        if len(self.source_dirs) == 0:
             self.source_dirs = []
             for dirName, subdirList, fileList in os.walk(self.root_path):
                 if self.excl_paths.count(dirName) > 0:
