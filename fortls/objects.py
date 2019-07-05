@@ -45,6 +45,16 @@ ASSOC_TYPE_ID = 13
 ENUM_TYPE_ID = 14
 sort_keywords = True
 
+ddconn = None
+
+def debug_msg(message):
+#    return None
+    if ddconn != None:
+        ddconn.send_notification("window/showMessage", {
+            "type": 3,
+            "message": message
+        })
+
 
 def set_keyword_ordering(sorted):
     global sort_keywords
@@ -103,13 +113,28 @@ def get_use_tree(scope, use_dict, obj_tree, only_list=[], rename_map={}, curr_pa
             else:
                 tmp_map.pop(val1, None)
         return tmp_list, tmp_map
+
+    debug_msg('======')
+    debug_msg('=======')
+    debug_msg('========')
+    debug_msg('=========')
+
+    debug_msg('**dict {}'.format(use_dict.keys()))
+    debug_msg('**path {}'.format(scope.FQSN))
+
     # Detect and break circular references
     if scope.FQSN in curr_path:
         return use_dict
     new_path = curr_path + [scope.FQSN]
     # Add recursively
+
+    debug_msg('**new curr path {}, {}'.format(new_path, curr_path))
+
     for use_stmnt in scope.use:
         use_mod = use_stmnt[0]
+
+        debug_msg('**use_mod {}'.format(use_mod))
+
         if len(only_list) == 0:
             merged_use_list = use_stmnt[1][:]
             merged_rename = use_stmnt[3].copy()
@@ -303,13 +328,36 @@ def get_var_stack(line):
 def climb_type_tree(var_stack, curr_scope, obj_tree):
     """Walk up user-defined type sequence to determine final field type"""
     # Find base variable in current scope
+
+    ddconn.send_notification("window/showMessage", {
+        "type": 3,
+        "message": 'start: climb_type_tree {}'.format(var_stack)
+    })
+
     iVar = 0
     var_name = var_stack[iVar].strip().lower()
     var_obj = find_in_scope(curr_scope, var_name, obj_tree)
     if var_obj is None:
         return None
+
+    ddconn.send_notification("window/showMessage", {
+        "type": 3,
+        "message": 'varobj {}'.format(var_obj)
+    })
+    ddconn.send_notification("window/showMessage", {
+        "type": 3,
+        "message": 'varobj {}'.format(iVar)
+    })
+
     # Search for type, then next variable in stack and so on
-    for _ in range(30):
+    for iii in range(30):
+
+        ddconn.send_notification("window/showMessage", {
+            "type": 3,
+            "message": 'iii = {}'.format(iii)
+        })
+
+
         # Find variable type object
         type_obj = var_obj.get_type_obj(obj_tree)
         # Return if not found
@@ -1276,9 +1324,24 @@ class fortran_associate(fortran_block):
         return new_var
 
     def resolve_link(self, obj_tree):
+        ddconn.send_notification("window/showMessage", {
+            "type": 3,
+            "message": 'uuu: name={}, start={}, end={}'.format(self.name, self.sline, self.eline)
+        })
+
         for assoc_link in self.assoc_links:
             var_stack = get_var_stack(assoc_link[2])
+
+            ddconn.send_notification("window/showMessage", {
+                "type": 3,
+                "message": 'vvv: varstack={}'.format(var_stack)
+            })
+
             if len(var_stack) > 1:
+                ddconn.send_notification("window/showMessage", {
+                    "type": 3,
+                    "message": 'www'
+                })
                 type_scope = climb_type_tree(var_stack, self, obj_tree)
                 if type_scope is None:
                     continue
@@ -1462,16 +1525,42 @@ class fortran_var(fortran_obj):
         return self.desc
 
     def get_type_obj(self, obj_tree):
+        ddconn.send_notification("window/showMessage", {
+            "type": 3,
+            "message": 'typeobj = {}, link_obj = {}, parent = {}'.format(self.name, self.link_obj, self.parent)
+        })
+
         if self.link_obj is not None:
             return self.link_obj.get_type_obj(obj_tree)
         if (self.type_obj is None) and (self.parent is not None):
+            ddconn.send_notification("window/showMessage", {
+                "type": 3,
+                "message": '111 = {}'.format(self.desc)
+            })
+
             type_name = get_paren_substring(self.desc)
+
+            ddconn.send_notification("window/showMessage", {
+                "type": 3,
+                "message": '222 = {}'.format(type_name)
+            })
             if type_name is not None:
                 search_scope = self.parent
+
+                ddconn.send_notification("window/showMessage", {
+                    "type": 3,
+                    "message": '333 = {}, {}'.format(search_scope, search_scope.get_type())
+                })
+
                 if search_scope.get_type() == CLASS_TYPE_ID:
                     search_scope = search_scope.parent
                 if search_scope is not None:
                     type_name = type_name.strip().lower()
+
+                    ddconn.send_notification("window/showMessage", {
+                        "type": 3,
+                        "message": '444 = {}'.format(type_name)
+                    })
                     type_obj = find_in_scope(search_scope, type_name, obj_tree)
                     if type_obj is not None:
                         self.type_obj = type_obj
@@ -1870,11 +1959,28 @@ class fortran_ast:
                     include_ast.none_scope = parent_scope
                     include_path[2] = added_entities
 
-    def resolve_links(self, obj_tree, link_version):
+    def resolve_links(self, obj_tree, link_version, conn):
+        global ddconn
+        ddconn = conn
         for inherit_obj in self.inherit_objs:
+            ddconn.send_notification("window/showMessage", {
+                "type": 3,
+                "message": 'xxx: {}'.format(inherit_obj)
+            })
+
             inherit_obj.resolve_inherit(obj_tree, inherit_version=link_version)
         for linkable_obj in self.linkable_objs:
+            ddconn.send_notification("window/showMessage", {
+                "type": 3,
+                "message": 'yyy: {}'.format(linkable_obj)
+            })
+
             linkable_obj.resolve_link(obj_tree)
+
+        ddconn.send_notification("window/showMessage", {
+            "type": 3,
+            "message": 'eee'
+        })
 
     def close_file(self, line_number):
         # Close open scopes

@@ -1222,7 +1222,7 @@ class LangServer:
             # Update inheritance/links
             self.link_version = (self.link_version + 1) % 1000
             for _, file_obj in self.workspace.items():
-                file_obj.ast.resolve_links(self.obj_tree, self.link_version)
+                file_obj.ast.resolve_links(self.obj_tree, self.link_version, None)
         self.send_diagnostics(uri)
 
     def add_file(self, filepath):
@@ -1258,7 +1258,7 @@ class LangServer:
         # Update local links/inheritance if necessary
         if update_links:
             self.link_version = (self.link_version + 1) % 1000
-            ast_new.resolve_links(self.obj_tree, self.link_version)
+            ast_new.resolve_links(self.obj_tree, self.link_version, self.conn)
         return True, None
 
     def workspace_init(self):
@@ -1303,8 +1303,14 @@ class LangServer:
             file_obj.ast.resolve_includes(self.workspace)
         # Update inheritance/links
         self.link_version = (self.link_version + 1) % 1000
-        for _, file_obj in self.workspace.items():
-            file_obj.ast.resolve_links(self.obj_tree, self.link_version)
+
+        for nnn, file_obj in self.workspace.items():
+            self.post_message('aaa:{}'.format(nnn), 3)
+            file_obj.ast.resolve_links(self.obj_tree, self.link_version, self.conn)
+            if nnn == '/data/fpm/oop_main/src/solver/equations/LIQUID_boundaryConditions_v.F90':
+                break
+
+        self.post_message('zzz', 3)
 
     def serve_exit(self, request):
         # Exit server
